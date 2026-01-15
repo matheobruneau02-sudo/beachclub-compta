@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  MANAGER
+  EMPLOYEE
+  READONLY
+}
+
+enum TxType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  OTHER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  role         Role     @default(EMPLOYEE)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  transactions Transaction[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id            String        @id @default(cuid())
+  type          TxType
+  amountCents   Int
+  description   String?
+  occurredAt    DateTime      @default(now())
+  paymentMethod PaymentMethod @default(OTHER)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  createdById String
+  createdBy   User @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([occurredAt])
+  @@index([type])
+}
